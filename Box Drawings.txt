@@ -1,0 +1,9 @@
+corners: ╔ ╗ ╚ ╝
+
+basic bars: ═ ─ ║ │
+
+top and bottom rows: ╤ ╦ ╩ ╧
+
+side columns: ╠ ╟ ╣ ╢
+
+inside crosses: ╬ ╫ ╪ ┼

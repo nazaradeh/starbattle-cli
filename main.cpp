@@ -47,7 +47,7 @@ int main() {
 	std::cout << "\x1b[?1049h"; // Switch to the alternate screen buffer.
 	std::cout << "\x1b[H"; // Move to the top of the screen.
 
-
+	// Each region is numbered from 0 to 9. Each region must contain exactly 2 stars.
 	int regions[10][10] = {
 		{0, 0, 0, 1, 2, 2, 2, 2, 2, 2},
 		{0, 3, 1, 1, 2, 2, 2, 2, 2, 2},
@@ -82,85 +82,63 @@ int main() {
 			horizontalComparisons[row][col] = regions[row][col] == regions[row][col+1];
 		}
 	}
+	
+	
+	wchar_t grid[21][41];	
+	
+	// Ceiling row
+	grid[0][0] = L'╔'; // Top left corner
+	for (int i = 1; i < 40; i += 4) {
+		for (int j = 0; j < 3; ++j) {grid[0][i+j] = L'═';} // Three horizontal lines: ═══
+		if (i+3 < 39) {grid[0][i+3] = TCeiling(horizontalComparisons[0][(i-1)/4]);} // ╤ or ╦. Increments when i is at 4, 8, 12, etc.
+		else {grid[0][40] = L'╗';} // Top right corner
+	}
+	
+	for (int h = 1; h < 20; h += 2) {
+		// Conversion from grid rows to gameplay rows = (h-1)/2
+		// Conversion from grid columns to gameplay columns = (i-1)/4
+	
+		// Gameplay rows
+		grid[h][0] = L'║';
+		for (int i = 1; i < 40; i += 4) {
+			grid[h][i] = L' ';
+			grid[h][i+1] = starsInput[(h-1)/2][(i-1)/4]; // Play area, where a star can be added. Increments when i is at 2, 6, 10, etc.
+			grid[h][i+2] = L' ';
+			if (i+3 < 39) {grid[h][i+3] = verticalBar(horizontalComparisons[(h-1)/2][(i-1)/4]);} // │ or ║
+			else {grid[h][40] = L'║';}
+		}
+
+		// Border rows
+		if (h < 19) {
+			grid[h+1][0] = leftTWall(verticalComparisons[(h-1)/2][0]); // ╟ or ╠
+			for (int i = 1; i < 40; i += 4) {
+				for (int j = 0; j < 3; ++j) {grid[h+1][i+j] = horizontalBar(verticalComparisons[(h-1)/2][(i-1)/4]);} // Three horizontal lines: ─── or ═══
+				if (i+3 < 39) {grid[h+1][i+3] = cross((bool[4])
+						{horizontalComparisons[(h-1)/2][(i-1)/4], horizontalComparisons[(h+1)/2][(i-1)/4],
+						verticalComparisons[(h-1)/2][(i-1)/4], verticalComparisons[(h-1)/2][(i+3)/4]});} // ┼, ╬, etc.
+				else {grid[h+1][40] = rightTWall(verticalComparisons[(h-1)/2][9]);} // ╢ or ╣
+			}
+		}
+
+		// Floor row
+		else {
+			grid[20][0] = L'╚'; // Bottom left corner
+			for (int i = 1; i < 40; i += 4) {
+				for (int j = 0; j < 3; ++j) {grid[20][i+j] = L'═';} // Three horizontal lines: ═══
+				if (i+3 < 39) {grid[20][i+3] = TFloor(horizontalComparisons[9][(i-1)/4]);} // ╧ or ╩
+				else {grid[20][40] = L'╝';} // Bottom right corner
+			}
+		}
+
+	}
 
 	
-	wchar_t grid[21][41] = {
-
-		{L'╔', L'═', L'═', L'═', TCeiling(horizontalComparisons[0][0]),
-			L'═', L'═', L'═', TCeiling(horizontalComparisons[0][1]),
-			L'═', L'═', L'═', TCeiling(horizontalComparisons[0][2]),
-			L'═', L'═', L'═', TCeiling(horizontalComparisons[0][3]),
-			L'═', L'═', L'═', TCeiling(horizontalComparisons[0][4]),
-			L'═', L'═', L'═', TCeiling(horizontalComparisons[0][5]),
-			L'═', L'═', L'═', TCeiling(horizontalComparisons[0][6]),
-			L'═', L'═', L'═', TCeiling(horizontalComparisons[0][7]),
-			L'═', L'═', L'═', TCeiling(horizontalComparisons[0][8]),
-			L'═', L'═', L'═', L'╗'},
-
-		{L'║', L' ', starsInput[0][0], L' ', verticalBar(horizontalComparisons[0][0]),
-			L' ', starsInput[0][1], L' ', verticalBar(horizontalComparisons[0][1]),
-			L' ', starsInput[0][2], L' ', verticalBar(horizontalComparisons[0][2]),
-			L' ', starsInput[0][3], L' ', verticalBar(horizontalComparisons[0][3]),
-			L' ', starsInput[0][4], L' ', verticalBar(horizontalComparisons[0][4]),
-			L' ', starsInput[0][5], L' ', verticalBar(horizontalComparisons[0][5]),
-			L' ', starsInput[0][6], L' ', verticalBar(horizontalComparisons[0][6]),
-			L' ', starsInput[0][7], L' ', verticalBar(horizontalComparisons[0][7]),
-			L' ', starsInput[0][8], L' ', verticalBar(horizontalComparisons[0][8]),
-			L' ', starsInput[0][9], L' ', L'║'},
-
-		{leftTWall(verticalComparisons[0][0]),
-			horizontalBar(verticalComparisons[0][0]),
-			horizontalBar(verticalComparisons[0][0]),
-			horizontalBar(verticalComparisons[0][0]),
-			cross((bool[4]){horizontalComparisons[0][0], horizontalComparisons[1][0], verticalComparisons[0][0], verticalComparisons[0][1]}),
-			horizontalBar(verticalComparisons[0][1]),
-			horizontalBar(verticalComparisons[0][1]),
-			horizontalBar(verticalComparisons[0][1]),
-			cross((bool[4]){horizontalComparisons[0][1], horizontalComparisons[1][1], verticalComparisons[0][1], verticalComparisons[0][2]}),
-			horizontalBar(verticalComparisons[0][2]),
-			horizontalBar(verticalComparisons[0][2]),
-			horizontalBar(verticalComparisons[0][2]),
-			cross((bool[4]){horizontalComparisons[0][2], horizontalComparisons[1][2], verticalComparisons[0][2], verticalComparisons[0][3]}),
-			horizontalBar(verticalComparisons[0][3]),
-			horizontalBar(verticalComparisons[0][3]),
-			horizontalBar(verticalComparisons[0][3]),
-			cross((bool[4]){horizontalComparisons[0][3], horizontalComparisons[1][3], verticalComparisons[0][3], verticalComparisons[0][4]}),
-			horizontalBar(verticalComparisons[0][4]),
-			horizontalBar(verticalComparisons[0][4]),
-			horizontalBar(verticalComparisons[0][4]),
-			cross((bool[4]){horizontalComparisons[0][4], horizontalComparisons[1][4], verticalComparisons[0][4], verticalComparisons[0][5]}),
-			horizontalBar(verticalComparisons[0][5]),
-			horizontalBar(verticalComparisons[0][5]),
-			horizontalBar(verticalComparisons[0][5]),
-			cross((bool[4]){horizontalComparisons[0][5], horizontalComparisons[1][5], verticalComparisons[0][5], verticalComparisons[0][6]}),
-			horizontalBar(verticalComparisons[0][6]),
-			horizontalBar(verticalComparisons[0][6]),
-			horizontalBar(verticalComparisons[0][6]),
-			cross((bool[4]){horizontalComparisons[0][6], horizontalComparisons[1][6], verticalComparisons[0][6], verticalComparisons[0][7]}),
-			horizontalBar(verticalComparisons[0][7]),
-			horizontalBar(verticalComparisons[0][7]),
-			horizontalBar(verticalComparisons[0][7]),
-			cross((bool[4]){horizontalComparisons[0][7], horizontalComparisons[1][7], verticalComparisons[0][7], verticalComparisons[0][8]}),
-			horizontalBar(verticalComparisons[0][8]),
-			horizontalBar(verticalComparisons[0][8]),
-			horizontalBar(verticalComparisons[0][8]),
-			cross((bool[4]){horizontalComparisons[0][8], horizontalComparisons[1][8], verticalComparisons[0][8], verticalComparisons[0][9]}),
-			horizontalBar(verticalComparisons[0][9]),
-			horizontalBar(verticalComparisons[0][9]),
-			horizontalBar(verticalComparisons[0][9]),
-			rightTWall(verticalComparisons[0][9])},
-
-		{L'║', L' ', starsInput[1][0], L' ', verticalBar(horizontalComparisons[1][0]), L' ', starsInput[1][1], L' ', L'║'},
-
-		{L'╚', L'═', L'═', L'═', TFloor(horizontalComparisons[1][0]), L'═', L'═', L'═', L'╝'}
-
-	};
-	
+	// Display grid
 	for (wchar_t (&row)[41] : grid) {
 		for (wchar_t col : row) {std::wcout << col;}
 		std::wcout << std::endl;
 	}
-	
+
     	// Cursor position
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
     	// Create a COORD struct to hold the cursor position
@@ -178,33 +156,32 @@ int main() {
 			break;
 		}
 
-		if ((GetAsyncKeyState('H') & 0x8000) && cursorLocation[0] > 2) {
+		if ((GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A') || GetAsyncKeyState('H')) && cursorLocation[0] > 2) {
 			cursorLocation[0] -= 4;
 			position.X = cursorLocation[0];
     			SetConsoleCursorPosition(hStdout, position);	
-			while (GetAsyncKeyState('H') & 0x8000);
-
+			while ((GetAsyncKeyState(VK_LEFT) & 0x8000) || (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('H') & 0x8000));
 		}
 
-		if ((GetAsyncKeyState('J') & 0x8000) && cursorLocation[1] < 19) {
+		if ((GetAsyncKeyState(VK_DOWN) ||GetAsyncKeyState('S') ||  GetAsyncKeyState('J')) && cursorLocation[1] < 19) {
 			cursorLocation[1] += 2;
 			position.Y = cursorLocation[1];
     			SetConsoleCursorPosition(hStdout, position);
- 			while (GetAsyncKeyState('J') & 0x8000);
+ 			while ((GetAsyncKeyState(VK_DOWN) & 0x8000) || (GetAsyncKeyState('S') & 0x8000) || (GetAsyncKeyState('J') & 0x8000));
 		}
 
-		if ((GetAsyncKeyState('K') & 0x8000) && cursorLocation[1] > 1) {
+		if ((GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W') || GetAsyncKeyState('K')) && cursorLocation[1] > 1) {
 			cursorLocation[1] -= 2;
 			position.Y = cursorLocation[1];
     			SetConsoleCursorPosition(hStdout, position);
- 			while (GetAsyncKeyState('K') & 0x8000);
+ 			while ((GetAsyncKeyState(VK_UP) & 0x8000) || (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('K') & 0x8000));
 		}
 
-		if ((GetAsyncKeyState('L') & 0x8000) && cursorLocation[0] < 38) {
+		if ((GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D') || GetAsyncKeyState('L')) && cursorLocation[0] < 38) {
 			cursorLocation[0] += 4;
 			position.X = cursorLocation[0];
     			SetConsoleCursorPosition(hStdout, position);
- 			while (GetAsyncKeyState('L') & 0x8000);
+ 			while ((GetAsyncKeyState(VK_RIGHT) & 0x8000) || (GetAsyncKeyState('D') & 0x8000) || (GetAsyncKeyState('L') & 0x8000));
 		}
 
 	}

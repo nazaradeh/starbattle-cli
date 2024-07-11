@@ -33,3 +33,5 @@
 
 # Build folder
 /build
+CMakeLists.txt
+note_to_self.txt

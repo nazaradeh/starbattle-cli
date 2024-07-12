@@ -47,6 +47,7 @@ int main() {
 
 		if ((GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A') || GetAsyncKeyState('H')) && cursorLocationActual[0] > 2) {
 			cursorLocationActual[0] -= 4;
+			cursorLocationGameplay[0] -= 1;
 			position.X = cursorLocationActual[0];
     			SetConsoleCursorPosition(hStdout, position);	
 			while ((GetAsyncKeyState(VK_LEFT) & 0x8000) || (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('H') & 0x8000));
@@ -54,6 +55,7 @@ int main() {
 
 		if ((GetAsyncKeyState(VK_DOWN) ||GetAsyncKeyState('S') ||  GetAsyncKeyState('J')) && cursorLocationActual[1] < 19) {
 			cursorLocationActual[1] += 2;
+			cursorLocationGameplay[1] += 1;
 			position.Y = cursorLocationActual[1];
     			SetConsoleCursorPosition(hStdout, position);
  			while ((GetAsyncKeyState(VK_DOWN) & 0x8000) || (GetAsyncKeyState('S') & 0x8000) || (GetAsyncKeyState('J') & 0x8000));
@@ -61,6 +63,7 @@ int main() {
 
 		if ((GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W') || GetAsyncKeyState('K')) && cursorLocationActual[1] > 1) {
 			cursorLocationActual[1] -= 2;
+			cursorLocationGameplay[1] -= 1;
 			position.Y = cursorLocationActual[1];
     			SetConsoleCursorPosition(hStdout, position);
  			while ((GetAsyncKeyState(VK_UP) & 0x8000) || (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('K') & 0x8000));
@@ -68,10 +71,22 @@ int main() {
 
 		if ((GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D') || GetAsyncKeyState('L')) && cursorLocationActual[0] < 38) {
 			cursorLocationActual[0] += 4;
+			cursorLocationGameplay[0] += 1;
 			position.X = cursorLocationActual[0];
     			SetConsoleCursorPosition(hStdout, position);
  			while ((GetAsyncKeyState(VK_RIGHT) & 0x8000) || (GetAsyncKeyState('D') & 0x8000) || (GetAsyncKeyState('L') & 0x8000));
 		}
+
+		if ((GetAsyncKeyState(VK_RETURN) & 0x8000) || GetAsyncKeyState(VK_SPACE)) {
+			if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L' '){starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L'★';}
+			else if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L'★'){starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L'×';}
+			else if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L'×'){starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L' ';}
+			std::wcout << starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]];
+			SetConsoleCursorPosition(hStdout, position);
+ 			while ((GetAsyncKeyState(VK_RETURN) & 0x8000) || (GetAsyncKeyState(VK_SPACE) & 0x8000) || (GetAsyncKeyState('L') & 0x8000));
+		}
+
+		Sleep(10);
 
 	}
 	return 0;

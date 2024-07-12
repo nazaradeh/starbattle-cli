@@ -3,15 +3,10 @@
 #include <windows.h>
 
 wchar_t horizontalBar(bool b) {return b ? L'─' : L'═';}
-
 wchar_t verticalBar(bool b) {return b ? L'│' : L'║';}
-
 wchar_t leftTWall(bool b) {return b ? L'╟' : L'╠';}
-
 wchar_t rightTWall(bool b) {return b ? L'╢' : L'╣';}
-
 wchar_t TCeiling(bool b) {return b ? L'╤' : L'╦';}
-
 wchar_t TFloor(bool b) {return b ? L'╧' : L'╩';}
 
 wchar_t cross(bool b[4]) {
@@ -94,6 +89,7 @@ void drawGrid(int regions[10][10]) {
 
 	std::cout << "\x1b[?1049h"; // Switch to the alternate screen buffer.
 	std::cout << "\x1b[H"; // Move to the top of the screen.	
+	
 	// Display grid
 	for (wchar_t (&row)[41] : grid) {
 		for (wchar_t col : row) {std::wcout << col;}

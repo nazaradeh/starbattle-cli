@@ -2,6 +2,7 @@
 #include <iostream>
 #include <windows.h>
 #include <algorithm>
+//#include <chrono>
 
 int main() {
 
@@ -19,8 +20,13 @@ int main() {
 	};
 
 
-	wchar_t starsInput[10][10];
+	wchar_t starsInput[10][10];	
 	for (wchar_t (&row)[10] : starsInput) {std::fill(std::begin(row), std::end(row), L' ');}
+
+	// To see if there are too many stars
+	int starsInRow[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	int starsInColumn[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	int starsInRegion[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	drawGrid(regions); // Draw the grid visually on the console via grid.cpp
 
@@ -38,6 +44,10 @@ int main() {
     	SetConsoleCursorPosition(hStdout, position);
 
 	// Controls
+	//enum keyState {RELEASED, PRESSED, HELD};
+	//std::chrono::steady_clock::time_point pressedTime;
+	//std::chrono::steady_clock::time_point heldTime;
+	Sleep(100);
 	while (true) {
 
 		if (GetAsyncKeyState(VK_ESCAPE)) {
@@ -78,12 +88,39 @@ int main() {
 		}
 
 		if ((GetAsyncKeyState(VK_RETURN) & 0x8000) || GetAsyncKeyState(VK_SPACE)) {
-			if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L' '){starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L'★';}
-			else if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L'★'){starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L'×';}
-			else if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L'×'){starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L' ';}
-			std::wcout << starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]];
-			SetConsoleCursorPosition(hStdout, position);
- 			while ((GetAsyncKeyState(VK_RETURN) & 0x8000) || (GetAsyncKeyState(VK_SPACE) & 0x8000) || (GetAsyncKeyState('L') & 0x8000));
+			if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L' ') {
+				starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L'·';
+				std::cout << "\x1b[90m";
+			}
+			else if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L'·') {
+				starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L'★';
+				++starsInRow[cursorLocationGameplay[1]];
+				++starsInColumn[cursorLocationGameplay[0]];
+				++starsInRegion[regions[cursorLocationGameplay[1]][cursorLocationGameplay[0]]];
+				if (starsInRow[cursorLocationGameplay[1]] > 2
+						|| starsInColumn[cursorLocationGameplay[0]] > 2
+						|| starsInRegion[regions[cursorLocationGameplay[1]][cursorLocationGameplay[0]]] > 2
+						|| starsInput[cursorLocationGameplay[0] - 1][cursorLocationGameplay[1] - 1] == L'★' 
+						|| starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1] - 1] == L'★' 
+						|| starsInput[cursorLocationGameplay[0] + 1][cursorLocationGameplay[1] - 1] == L'★' 
+						|| starsInput[cursorLocationGameplay[0] - 1][cursorLocationGameplay[1]] == L'★' 
+						|| starsInput[cursorLocationGameplay[0] + 1][cursorLocationGameplay[1]] == L'★' 
+						|| starsInput[cursorLocationGameplay[0] - 1][cursorLocationGameplay[1] + 1] == L'★' 
+						|| starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1] + 1] == L'★' 
+						|| starsInput[cursorLocationGameplay[0 + 1]][cursorLocationGameplay[1] + 1] == L'★') {
+					std::cout << "\x1b[31m";
+				}
+
+				else {std::cout << "\x1b[33m";}
+			}
+			else if (starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] == L'★') {
+				starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] = L' ';
+				--starsInRow[cursorLocationGameplay[1]];
+				--starsInColumn[cursorLocationGameplay[0]];
+				--starsInRegion[regions[cursorLocationGameplay[0]][cursorLocationGameplay[1]]];
+			}
+			std::wcout << starsInput[cursorLocationGameplay[0]][cursorLocationGameplay[1]] << '\b';
+ 			while ((GetAsyncKeyState(VK_RETURN) & 0x8000) || (GetAsyncKeyState(VK_SPACE) & 0x8000));
 		}
 
 		Sleep(10);

@@ -2,34 +2,14 @@
 #include <iostream>
 #include <windows.h>
 
-wchar_t horizontalBar(bool b) {return b ? L'─' : L'═';}
-wchar_t verticalBar(bool b) {return b ? L'│' : L'║';}
-wchar_t leftTWall(bool b) {return b ? L'╟' : L'╠';}
-wchar_t rightTWall(bool b) {return b ? L'╢' : L'╣';}
-wchar_t TCeiling(bool b) {return b ? L'╤' : L'╦';}
-wchar_t TFloor(bool b) {return b ? L'╧' : L'╩';}
+wchar_t horizontalBar(bool b) {return b ? L'─' : L'▄';}
+wchar_t verticalBar(bool b) {return b ? L'│' : L'█';}
+wchar_t TFloor(bool b) {return b ? L'▄' : L'█';}
 
 wchar_t cross(bool b[4]) {
-	char crossComparisons = b[0] << 3 | b[1] << 2 | b[2] << 1 | b[3];
-	switch(crossComparisons) {
-		case 0b0000: return L'╬';
-		case 0b0001: return L'╣';
-		case 0b0010: return L'╠';
-		case 0b0011: return L'╫';
-		case 0b0100: return L'╩';
-		case 0b0101: return L'╝';
-		case 0b0110: return L'╚';
-		case 0b0111: return L'?'; // Not possible.
-		case 0b1000: return L'╦';
-		case 0b1001: return L'╗';
-		case 0b1010: return L'╔';
-		case 0b1011: return L'?'; // Not possible.
-		case 0b1100: return L'╪';
-		case 0b1101: return L'?'; // Not possible.
-		case 0b1110: return L'?'; // Not possible.
-		case 0b1111: return L'┼';
-		default: return L'?'; // Not possible.
-	}
+	if (b[0] == 0) {return L'█';} // The top two cells are in different regions
+	else if (b[0] && b[1] && b[2] && b[3] && b[4]) {return L'┼';} // All four surrounding cells are in the same region
+	else {return L'▄';}
 }
 
 void drawGrid(int regions[10][10]) {
@@ -38,46 +18,40 @@ void drawGrid(int regions[10][10]) {
 	wchar_t grid[21][41];
 	
 	// Ceiling row
-	grid[0][0] = L'╔'; // Top left corner
-	for (int i = 1; i < 40; i += 4) {
-		for (int j = 0; j < 3; ++j) {grid[0][i+j] = L'═';} // Three horizontal lines: ═══
-		if (i+3 < 39) {grid[0][i+3] = TCeiling(regions[0][(i-1)/4] == regions[0][(i+3)/4]);} // ╤ or ╦. Increments when i is at 4, 8, 12, etc.
-		else {grid[0][40] = L'╗';} // Top right corner
-	}
+	for (int col = 0; col < 41; ++col) {grid[0][col] = L'▄';}
 	
-	for (int h = 1; h < 20; h += 2) {
-		// Conversion from grid rows to gameplay rows = (h-1)/2
-		// Conversion from grid columns to gameplay columns = (i-1)/4
+	for (int row = 1; row < 20; row += 2) {
+		// Conversion from grid rows to gameplay rows = (row-1)/2
+		// Conversion from grid columns to gameplay columns = (col-1)/4
 	
 		// Gameplay rows
-		grid[h][0] = L'║';
-		for (int i = 1; i < 40; i += 4) {
-			for (int j = 0; j < 3; ++j) {grid[h][i+j] = L' ';}
-			if (i+3 < 39) {grid[h][i+3] = verticalBar(regions[(h-1)/2][(i-1)/4] == regions[(h-1)/2][(i+3)/4]);} // │ or ║
-			else {grid[h][40] = L'║';}
+		grid[row][0] = L'█';
+		for (int col = 1; col < 40; col += 4) {
+			for (int j = 0; j < 3; ++j) {grid[row][col+j] = L' ';} // Three spaces creating an empty cell
+			if (col+3 < 39) {grid[row][col+3] = verticalBar(regions[(row-1)/2][(col-1)/4] == regions[(row-1)/2][(col+3)/4]);} // │ or █
+			else {grid[row][40] = L'█';}
 		}
 
 		// Border rows
-		if (h < 19) {
-			grid[h+1][0] = leftTWall(regions[(h-1)/2][0] == regions[(h+1)/2][0]); // ╟ or ╠
-			for (int i = 1; i < 40; i += 4) {
-				for (int j = 0; j < 3; ++j) {grid[h+1][i+j] = horizontalBar(regions[(h-1)/2][(i-1)/4] == regions[(h+1)/2][(i-1)/4]);} // Three horizontal lines: ─── or ═══
-				if (i+3 < 39) {grid[h+1][i+3] = cross((bool[4])
-						{regions[(h-1)/2][(i-1)/4] == regions[(h-1)/2][(i+3)/4],
-						regions[(h+1)/2][(i-1)/4] == regions[(h+1)/2][(i+3)/4],
-						regions[(h-1)/2][(i-1)/4] == regions[(h+1)/2][(i-1)/4],
-						regions[(h-1)/2][(i+3)/4] == regions[(h+1)/2][(i+3)/4]});} // ┼, ╬, etc.
-				else {grid[h+1][40] = rightTWall(regions[(h-1)/2][9] == regions[(h+1)/2][9]);} // ╢ or ╣
+		if (row < 19) {
+			grid[row+1][0] = L'█';
+			for (int col = 1; col < 40; col += 4) {
+				for (int j = 0; j < 3; ++j) {grid[row+1][col+j] = horizontalBar(regions[(row-1)/2][(col-1)/4] == regions[(row+1)/2][(col-1)/4]);} // Three horizontal lines: ─── or ▄▄▄
+				if (col+3 < 39) {grid[row+1][col+3] = cross((bool[4])
+						{regions[(row-1)/2][(col-1)/4] == regions[(row-1)/2][(col+3)/4],
+						regions[(row+1)/2][(col-1)/4] == regions[(row+1)/2][(col+3)/4],
+						regions[(row-1)/2][(col-1)/4] == regions[(row+1)/2][(col-1)/4],
+						regions[(row-1)/2][(col+3)/4] == regions[(row+1)/2][(col+3)/4]});} // ┼, ▄, or █
+				else {grid[row+1][40] = L'█';}
 			}
 		}
 
 		// Floor row
 		else {
-			grid[20][0] = L'╚'; // Bottom left corner
-			for (int i = 1; i < 40; i += 4) {
-				for (int j = 0; j < 3; ++j) {grid[20][i+j] = L'═';} // Three horizontal lines: ═══
-				if (i+3 < 39) {grid[20][i+3] = TFloor(regions[9][(i-1)/4] == regions[9][(i+3)/4]);} // ╧ or ╩
-				else {grid[20][40] = L'╝';} // Bottom right corner
+			grid[20][0] = L'█'; // Bottom left corner
+			for (int col = 1; col < 41; col += 4) {
+				for (int i = 0; i < 3; ++i) {grid[20][col+i] = L'▄';} // Three horizontal lines: ▄▄▄
+				grid[20][col+3] = TFloor(regions[9][(col-1)/4] == regions[9][(col+3)/4]); // ▄, or █
 			}
 		}
 
@@ -87,8 +61,8 @@ void drawGrid(int regions[10][10]) {
 	SetConsoleOutputCP(CP_UTF8);
 	std::wcout.imbue(std::locale("en_US.UTF-8"));
 
-	std::cout << "\x1b[?1049h"; // Switch to the alternate screen buffer.
-	std::cout << "\x1b[H"; // Move to the top of the screen.	
+	std::cout << "\x1b[?1049h" // Switch to the alternate screen buffer.
+		<< "\x1b[H"; // Move to the top of the screen.	
 	
 	// Display grid
 	for (wchar_t (&row)[41] : grid) {

@@ -4,18 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <utility>
-#include <cstdint>
 //#include <chrono>
-
-bool checkNeighbours(const std::array<std::array<wchar_t, 10>, 10>& starsInput, const std::pair<int, int>& inputLocation) {
-	const auto& [x, y] = inputLocation;
-	for(uint8_t xOff = -1; xOff < 2 && x + xOff < 10; ++xOff) {
-		for (uint8_t yOff = -1; yOff < 3 && (xOff != 0 && yOff != 0) && y + yOff < 10; ++yOff) {
-			if (starsInput[x+xOff][y+yOff] == L'★') {return 1;}
-		}
-	}
-	{return 0;}
-}
 
 int main() {
 
@@ -101,10 +90,31 @@ int main() {
 			
 			// Add ★
 			else if (starsInput[cursorLocationGameplay.first][cursorLocationGameplay.second] == L'·') {
+
 				starsInput[cursorLocationGameplay.first][cursorLocationGameplay.second] = STAR;
-				++starsInRow[cursorLocationGameplay.second];
-				++starsInColumn[cursorLocationGameplay.first];
-				++starsInRegion[regions[cursorLocationGameplay.second][cursorLocationGameplay.first]];
+				
+				//++starsInRow[cursorLocationGameplay.second];
+				//++starsInColumn[cursorLocationGameplay.first];
+				//++starsInRegion[regions[cursorLocationGameplay.second][cursorLocationGameplay.first]];
+				
+				// Always check adjacent cells for conflicting stars
+				//COORD RedStarPrint = cursorLocationActual;
+				for (int xOff = -1; xOff < 2; ++xOff) {
+				
+					if (starsInput[2][1] == STAR) {
+						SetConsoleCursorPosition(hStdout, {2, 1});
+						std::cout << 'a';
+					}
+					/*for (int yOff = -1; yOff < 2; ++yOff) {
+						if (xOff != 1 && yOff != 0 && starsInput[cursorLocationGameplay.first + xOff][cursorLocationGameplay.second + yOff] == STAR) {
+							RedStarPrint.X += 4 * xOff;
+							RedStarPrint.Y += 2 * yOff;
+							SetConsoleCursorPosition(hStdout, RedStarPrint);
+							std::wcout << "\x1b[31m" << STAR;
+						}
+					}*/
+				}
+				SetConsoleCursorPosition(hStdout, cursorLocationActual);
 
 				// Three ★ in row or column
 				if (starsInRow[cursorLocationGameplay.second] == 3 || starsInColumn[cursorLocationGameplay.first] == 3) {
@@ -133,7 +143,7 @@ int main() {
 						COORD positionForPrintingRedStar = {cursorLocationActual.X, 1};
 						for (int row = 0; row < starsInput.size(); ++row) {
 							if (row != cursorLocationGameplay.second && starsInput[cursorLocationGameplay.first][row] == STAR) {
-								SetConsoleCursorPosition(hStdout, positionForPrintingRedStar);
+								SetConsoleCursorPosition(hStdout, {static_cast<SHORT>(cursorLocationActual.X), static_cast<SHORT>(row * 2 + 1)});
 								std::wcout << STAR << '\b';
 								++starsReddened;
 								if (starsReddened >= 2) {break;}
@@ -148,11 +158,15 @@ int main() {
 				// Four or more ★ in row or column
 				else if (starsInRow[cursorLocationGameplay.second] > 3 || starsInColumn[cursorLocationGameplay.first] > 3) {std::wcout << "\x1b[31m" << STAR << '\b';}
 
-				else if (checkNeighbours(starsInput, cursorLocationGameplay)) {
-					std::wcout << "\x1b[31m" << STAR << '\b';
-				}
-
 				else {
+					for (int xOff = -1; xOff < 2; ++xOff) {
+						for (int yOff = -1; yOff < 2; ++yOff) {
+							if (xOff != 1 && yOff != 0 && starsInput[cursorLocationGameplay.first + xOff][cursorLocationGameplay.second + yOff] == STAR) {
+								SetConsoleCursorPosition(hStdout, {static_cast<SHORT>(cursorLocationActual.X + 4 * xOff), static_cast<SHORT>(cursorLocationActual.Y + 2 * yOff)});
+								std::wcout << "\x1b[31m" << STAR << '\b';
+							}
+						}
+					}
 					std::wcout << "\x1b[33m" << STAR << '\b';
 				}
 			}
@@ -170,10 +184,12 @@ int main() {
 					if (starsInRow[cursorLocationGameplay.second] == 2) {
 						int starsRestored = 0;
 						COORD positionForPrintingRedStar = {2, cursorLocationActual.Y};
-						for (auto& row : starsInput) {
-							if (row[cursorLocationGameplay.second] == STAR) {
-								SetConsoleCursorPosition(hStdout, positionForPrintingRedStar);
-								std::wcout << "\x1b[33m" << STAR << '\b';
+						for (int col = 0; col < starsInput.size(); ++col) {
+							if (starsInput[col][cursorLocationGameplay.second] == STAR) {
+								if (starsInColumn[col] < 3) {
+									SetConsoleCursorPosition(hStdout, positionForPrintingRedStar);
+									std::wcout << "\x1b[33m" << STAR << '\b';
+								}
 								++starsRestored;
 								if (starsRestored >= 2) {break;}
 							}
@@ -186,10 +202,12 @@ int main() {
 					if (starsInColumn[cursorLocationGameplay.first] == 2) {
 						int starsReddened = 0;
 						COORD positionForPrintingRedStar = {cursorLocationActual.X, 1};
-						for (auto& row : starsInput[cursorLocationGameplay.first]) {
-							if (row == STAR) {
-								SetConsoleCursorPosition(hStdout, positionForPrintingRedStar);
-								std::wcout << "\x1b[33m" << STAR << '\b';
+						for (int row = 0; row < starsInput.size(); ++row) {
+							if (starsInput[cursorLocationGameplay.first][row] == STAR) {
+								if (starsInRow[row] < 3) {
+									SetConsoleCursorPosition(hStdout, positionForPrintingRedStar);
+									std::wcout << "\x1b[33m" << STAR << '\b';
+								}
 								++starsReddened;
 								if (starsReddened >= 2) {break;}
 							}

@@ -57,16 +57,19 @@ void drawGrid(const std::array<std::array<int, 10>, 10>& regions) {
 
 	}
 
+	std::wstring result;
+
+	for (auto &row : grid) {
+		for (auto &col : row) {result.push_back(col);}
+		result.push_back(L'\n');
+	}
+
 	// Required for displaying box drawing characters.
 	SetConsoleOutputCP(CP_UTF8);
 	std::wcout.imbue(std::locale("en_US.UTF-8"));
 
-	std::cout << "\x1b[?1049h" // Switch to the alternate screen buffer.
+	std::wcout << "\x1b[?1049h" // Switch to the alternate screen buffer.
 		<< "\x1b[H"; // Move to the top of the screen.	
-	// Display grid
-	for (auto &row : grid) {
-		for (auto &col : row) {std::wcout << col;}
-		std::wcout << std::endl;
-	}
+	std::wcout << result;
 
 }

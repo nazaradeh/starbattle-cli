@@ -1,4 +1,4 @@
-#include "grid.h"
+#include "grid.hpp"
 #include <iostream>
 #include <windows.h>
 #include <algorithm>
@@ -6,10 +6,9 @@
 #include <utility>
 //#include <chrono>
 
-int main() {
+constexpr wchar_t STAR = L'★';
 
-	constexpr wchar_t STAR = L'★';
-	
+int main() {
 	std::array<std::array<int, 10>, 10> regions = {{
 		{0, 0, 0, 1, 2, 2, 2, 2, 2, 2},
 		{0, 3, 1, 1, 2, 2, 2, 2, 2, 2},
@@ -32,7 +31,13 @@ int main() {
 	std::array<int, 10> starsInColumn = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	std::array<int, 10> starsInRegion = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-	drawGrid(regions); // Draw the grid visually on the console via grid.cpp
+	std::wstring grid = buildGrid(regions); // Draw the grid visually on the console via grid.cpp
+	
+	// Required for displaying box drawing characters
+	SetConsoleOutputCP(CP_UTF8);
+	std::wcout.imbue(std::locale("en_US.UTF-8"));
+	//std::wcout << L"\x1b[?1049h\x1b[H" + grid; //Switch to alternate screen buffer, move to top of the screen, and print grid.
+	std::wcout << L"\x1b[?1049h\x1b[H" + grid; //Switch to alternate screen buffer, move to top of the screen, and print grid.
 
     	// Cursor position
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);

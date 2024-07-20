@@ -1,20 +1,59 @@
 #include "grid.hpp"
 #include <string>
-#include <array>
+#include <algorithm>
 
 std::wstring buildGrid(const std::array<std::array<int, 10>, 10>& regions) {
 	
-	std::wstring grid(41u, L'▄'); // Ceiling row
-	grid.append(L"\n█");
+	std::wstring grid(L"\x1b[H"); // Move to top of screen
+	grid.append(41u, L'▄'); // Ceiling row
+	grid.append(L"\n█"); // Start next line with a wall
 	
 	for (int row = 0; row < 10; ++row) {
 
 		// Gameplay rows
-		for (int col = 0; col < 9; ++col) {
-			grid.append(L"   "); // Three spaces creating an empty cell
-			grid.push_back(regions[row][col] == regions[row][col+1] ? L'│' : L'█'); // Divider between two horizontally-adjacent cells
+		for (int col = 0; col < 10; ++col) {
+
+			grid.push_back(L' ');
+			
+			switch (cellStates[col][row]) {
+				case EMPTY:
+					grid.push_back(L' ');
+					break;
+				case MARKEDOFF:
+					grid.append(L"\x1b[90m·\x1b[37m");
+					break;
+				case STAR: {
+					if (std::equal(starsInRow.begin(), starsInRow.end(), std::array<int, 10>{2, 2, 2, 2, 2, 2, 2, 2, 2, 2}.begin()) &&
+						std::equal(starsInColumn.begin(), starsInColumn.end(), std::array<int, 10>{2, 2, 2, 2, 2, 2, 2, 2, 2, 2}.begin()) &&
+						std::equal(starsInRegion.begin(), starsInRegion.end(), std::array<int, 10>{2, 2, 2, 2, 2, 2, 2, 2, 2, 2}.begin())) {
+						grid.append(L"\x1b[32m★\x1b[37m");
+						break;
+					}
+					bool conflictSpotted = false;
+					if (starsInRow[row] >= 3) {conflictSpotted = true;}
+					if (starsInColumn[col] >= 3) {conflictSpotted = true;}
+					if (starsInRegion[regions[row][col]] >= 3) {conflictSpotted = true;}
+					//Check adjacent cells for conflicting stars
+					for (int xOff = -1; xOff < 2 && !conflictSpotted; ++xOff) {
+						for (int yOff = -1; yOff < 2 && !conflictSpotted; ++yOff) {
+							if (!(xOff == 0 && yOff == 0) && col+xOff < 10 && row+yOff < 10 && cellStates[col+xOff][row+yOff] == STAR) {
+								conflictSpotted = true;
+							}
+						}
+					}
+					conflictSpotted ? grid.append(L"\x1b[31m★\x1b[37m") : grid.append(L"\x1b[33m★\x1b[37m");
+					break;
+				}
+				default: 
+					grid.append(L"\x1b[91m?");
+					break;
+			}
+			if (col < 9) {
+				grid.push_back(L' ');
+				grid.push_back(regions[row][col] == regions[row][col+1] ? L'│' : L'█'); // Divider between two horizontally-adjacent cells
+			}
+			else {grid.append(L" █\n█");} // Right wall
 		}
-		grid.append(L"   █\n█");
 
 		// Border rows
 		if (row < 9) {
@@ -35,7 +74,7 @@ std::wstring buildGrid(const std::array<std::array<int, 10>, 10>& regions) {
 
 		else {
 			for (int col = 0; col < 9; ++col) {
-				grid.append(L"▄▄▄"); // Three horizontal lines below a cell: ▄▄▄
+				grid.append(L"▄▄▄"); // Three horizontal lines below a cell
 				grid.push_back(regions[9][col] == regions[9][col+1] ? L'▄' : L'█');
 			}
 			grid.append(L"▄▄▄█\n");

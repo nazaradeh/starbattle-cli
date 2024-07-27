@@ -29,16 +29,11 @@ std::wstring buildGrid() {
 						grid.append(L"\x1b[32m★\x1b[37m");
 						break;
 					}
-					bool conflictSpotted = false;
-					if (starsInRow[row] >= 3) {conflictSpotted = true;}
-					if (starsInColumn[col] >= 3) {conflictSpotted = true;}
-					if (starsInRegion[regions[row][col]] >= 3) {conflictSpotted = true;}
+					bool conflictSpotted = starsInRow[row] >= 3 || starsInColumn[col] >= 3 || starsInRegion[regions[row][col]] >= 3;
 					//Check adjacent cells for conflicting stars
 					for (int xOff = -1; xOff < 2 && !conflictSpotted; ++xOff) {
 						for (int yOff = -1; yOff < 2 && !conflictSpotted; ++yOff) {
-							if (!(xOff == 0 && yOff == 0) && col+xOff < 10 && row+yOff < 10 && cellStates[col+xOff][row+yOff] == STAR) {
-								conflictSpotted = true;
-							}
+							if (!(xOff == 0 && yOff == 0) && col+xOff < 10 && row+yOff < 10 && cellStates[col+xOff][row+yOff] == STAR) conflictSpotted = true;
 						}
 					}
 					conflictSpotted ? grid.append(L"\x1b[31m★\x1b[37m") : grid.append(L"\x1b[33m★\x1b[37m");
@@ -62,8 +57,8 @@ std::wstring buildGrid() {
 				grid.append(regions[row][col] == regions[row+1][col] ? L"───" : L"▄▄▄"); // Divider between two verticall-adjacent cells
 
  				// Cross region: ┼, ▄, or █
-				if (regions[row][col] != regions[row][col+1]) {grid.push_back(L'█');} // The top two cells are in different regions
-				else if (regions[row+1][col] == regions[row+1][col+1] && regions[row][col] == regions[row+1][col]) {grid.push_back(L'┼');} // All four cells are in the same region
+				if (regions[row][col] != regions[row][col+1]) grid.push_back(L'█'); // The top two cells are in different regions
+				else if (regions[row+1][col] == regions[row+1][col+1] && regions[row][col] == regions[row+1][col]) grid.push_back(L'┼'); // All four cells are in the same region
 				else {grid.push_back(L'▄');}
 
 			}

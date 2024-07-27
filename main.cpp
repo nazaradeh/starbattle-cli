@@ -7,10 +7,10 @@
 #include <thread>
 
 std::array<std::array<int, 10>, 10> regions;
-std::array<std::array<CellState, 10>, 10> cellStates;
-std::array<int, 10> starsInRow;
-std::array<int, 10> starsInColumn;
-std::array<int, 10> starsInRegion;
+std::array<std::array<CellState, 10>, 10> cellStates = {EMPTY};
+std::array<int, 10> starsInRow = {0};
+std::array<int, 10> starsInColumn = {0};
+std::array<int, 10> starsInRegion = {0};
 COORD cursorLocationActual = {2, 1};
 std::pair<int, int> cursorLocationGameplay() {return std::make_pair((cursorLocationActual.X - 2) / 4, (cursorLocationActual.Y - 1) / 2);}
 
@@ -28,8 +28,6 @@ int main() {
 		{6, 6, 9, 9, 9, 9, 9, 5, 5, 5}
 	}};
 	
-	for (auto& row : cellStates) {row.fill(EMPTY);}
-
 	std::wstring grid = buildGrid();
 
 	/*
@@ -49,9 +47,6 @@ int main() {
 	std::wcout.imbue(std::locale("en_US.UTF-8"));
 	std::wcout << L"\x1b[?1049h" + grid; //Switch to alternate screen buffer and print grid.
 	
-	starsInRow.fill(0);
-	starsInColumn.fill(0);
-	starsInRegion.fill(0);
 
     	// Cursor position
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);

@@ -33,5 +33,9 @@
 
 # Build folder
 /build
+
 CMakeLists.txt
 note_to_self.txt
+.clangd
+curses.h
+panel.h

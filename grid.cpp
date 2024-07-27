@@ -2,8 +2,8 @@
 #include <string>
 #include <algorithm>
 
-std::wstring buildGrid(const std::array<std::array<int, 10>, 10>& regions) {
-	
+std::wstring buildGrid() {
+
 	std::wstring grid(L"\x1b[H"); // Move to top of screen
 	grid.append(41u, L'▄'); // Ceiling row
 	grid.append(L"\n█"); // Start next line with a wall
@@ -23,9 +23,9 @@ std::wstring buildGrid(const std::array<std::array<int, 10>, 10>& regions) {
 					grid.append(L"\x1b[90m·\x1b[37m");
 					break;
 				case STAR: {
-					if (std::equal(starsInRow.begin(), starsInRow.end(), std::array<int, 10>{2, 2, 2, 2, 2, 2, 2, 2, 2, 2}.begin()) &&
-						std::equal(starsInColumn.begin(), starsInColumn.end(), std::array<int, 10>{2, 2, 2, 2, 2, 2, 2, 2, 2, 2}.begin()) &&
-						std::equal(starsInRegion.begin(), starsInRegion.end(), std::array<int, 10>{2, 2, 2, 2, 2, 2, 2, 2, 2, 2}.begin())) {
+					if (std::ranges::all_of(starsInRow, [](int x) {return x == 2;}) &&
+						std::ranges::all_of(starsInColumn, [](int x) {return x == 2;}) &&
+						std::ranges::all_of(starsInRegion, [](int x) {return x == 2;})) {
 						grid.append(L"\x1b[32m★\x1b[37m");
 						break;
 					}

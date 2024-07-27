@@ -58,7 +58,7 @@ std::wstring buildGrid() {
 
  				// Cross region: ┼, ▄, or █
 				if (regions[row][col] != regions[row][col+1]) grid.push_back(L'█'); // The top two cells are in different regions
-				else if (regions[row+1][col] == regions[row+1][col+1] && regions[row][col] == regions[row+1][col]) grid.push_back(L'┼'); // All four cells are in the same region
+				else if (regions[row+1][col] == regions[row+1][col+1] && regions[row][col] == regions[row+1][col]) grid.push_back(L'┼'); // All in the same region
 				else {grid.push_back(L'▄');}
 
 			}

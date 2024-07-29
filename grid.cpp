@@ -15,7 +15,7 @@ std::wstring buildGrid() {
 
 			grid.push_back(L' ');
 			
-			switch (cellStates[col][row]) {
+			switch (cellStates[row][col]) {
 				case EMPTY:
 					grid.push_back(L' ');
 					break;
@@ -33,7 +33,7 @@ std::wstring buildGrid() {
 					//Check adjacent cells for conflicting stars
 					for (int xOff = -1; xOff < 2 && !conflictSpotted; ++xOff) {
 						for (int yOff = -1; yOff < 2 && !conflictSpotted; ++yOff) {
-							if (!(xOff == 0 && yOff == 0) && col+xOff < 10 && row+yOff < 10 && cellStates[col+xOff][row+yOff] == STAR) conflictSpotted = true;
+							if (!(xOff == 0 && yOff == 0) && col+xOff < 10 && row+yOff < 10 && cellStates[row+yOff][col+xOff] == STAR) conflictSpotted = true;
 						}
 					}
 					conflictSpotted ? grid.append(L"\x1b[31m★\x1b[37m") : grid.append(L"\x1b[33m★\x1b[37m");

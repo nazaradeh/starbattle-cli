@@ -10,5 +10,6 @@ extern std::array<int, 10> starsInColumn;
 extern std::array<int, 10> starsInRegion;
 
 std::wstring buildGrid();
+void solvePuzzle();
 
 #endif

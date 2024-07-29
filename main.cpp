@@ -87,21 +87,21 @@ int main() {
 		if ((GetAsyncKeyState(VK_RETURN) & 0x8000) || GetAsyncKeyState(VK_SPACE)) {
 			
 			// Add ·
-			if (cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] == EMPTY) {
-				cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] = MARKEDOFF;
+			if (cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] == EMPTY) {
+				cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] = MARKEDOFF;
 			}
 
 			// Add ★
-			else if (cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] == MARKEDOFF) {
-				cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] = STAR;
+			else if (cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] == MARKEDOFF) {
+				cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] = STAR;
 				++starsInRow[cursorLocationGameplay().second];
 				++starsInColumn[cursorLocationGameplay().first];
 				++starsInRegion[regions[cursorLocationGameplay().second][cursorLocationGameplay().first]];
 			}
 
 			// Clear cell
-			else if (cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] == STAR) {
-				cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] = EMPTY; 
+			else if (cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] == STAR) {
+				cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] = EMPTY; 
 				--starsInRow[cursorLocationGameplay().second];
 				--starsInColumn[cursorLocationGameplay().first];
 				--starsInRegion[regions[cursorLocationGameplay().second][cursorLocationGameplay().first]];
@@ -115,8 +115,10 @@ int main() {
  			while ((GetAsyncKeyState(VK_RETURN) & 0x8000) || (GetAsyncKeyState(VK_SPACE) & 0x8000));
 		}
 
-		if (GetAsyncKeyState('0')) {
-			while (GetAsyncKeyState('0'));
+		if (GetAsyncKeyState('R')) {
+			solvePuzzle();
+			std::wcout << buildGrid();
+			while (GetAsyncKeyState('R'));
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));

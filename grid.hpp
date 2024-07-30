@@ -9,7 +9,7 @@ extern std::array<int, 10> starsInRow;
 extern std::array<int, 10> starsInColumn;
 extern std::array<int, 10> starsInRegion;
 
-std::wstring buildGrid();
+std::string buildGrid();
 void solvePuzzle();
 
 #endif

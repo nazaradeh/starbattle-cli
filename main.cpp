@@ -1,10 +1,10 @@
 #include "grid.hpp"
 //#include "curses.h"
-#include <iostream>
 #include <windows.h>
-#include <array>
-#include <chrono>
+//#include <array>
+//#include <chrono>
 #include <thread>
+//#include <print>
 
 std::array<std::array<int, 10>, 10> regions;
 std::array<std::array<CellState, 10>, 10> cellStates = {EMPTY};
@@ -28,35 +28,15 @@ int main() {
 		{6, 6, 9, 9, 9, 9, 9, 5, 5, 5}
 	}};
 	
-	std::wstring grid = buildGrid();
-
-	/*
-	initscr();
-	raw();
-	keypad(stdscr, TRUE);
-	noecho();
-	curs_set(0);
-	timeout(0);
+	std::print("\x1b[?1049h{}", buildGrid());
 	
-	printw("%ls", grid.c_str());
-	refresh();
-	*/
-
-	// Required for displaying box drawing characters
-	SetConsoleOutputCP(CP_UTF8);
-	std::wcout.imbue(std::locale("en_US.UTF-8"));
-	std::wcout << L"\x1b[?1049h" + grid; //Switch to alternate screen buffer and print grid.
-	
-
-    	// Cursor position
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
     	SetConsoleCursorPosition(hStdout, cursorLocationActual);
-	// Controls
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	while (true) {
 
 		if (GetAsyncKeyState(VK_ESCAPE)) {
-			std::cout << "\x1b[?1049l";
+			std::print("\x1b[?1049l");
 			break;
 		}
 
@@ -66,7 +46,7 @@ int main() {
 			while ((GetAsyncKeyState(VK_LEFT) & 0x8000) || (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('H') & 0x8000));
 		}
 
-		if ((GetAsyncKeyState(VK_DOWN) ||GetAsyncKeyState('S') ||  GetAsyncKeyState('J')) && cursorLocationActual.Y < 19) {
+		if ((GetAsyncKeyState(VK_DOWN) || GetAsyncKeyState('W') || GetAsyncKeyState('J')) && cursorLocationActual.Y < 19) {
 			cursorLocationActual.Y += 2;
     			SetConsoleCursorPosition(hStdout, cursorLocationActual);
  			while ((GetAsyncKeyState(VK_DOWN) & 0x8000) || (GetAsyncKeyState('S') & 0x8000) || (GetAsyncKeyState('J') & 0x8000));
@@ -107,9 +87,7 @@ int main() {
 				--starsInRegion[regions[cursorLocationGameplay().second][cursorLocationGameplay().first]];
 			}
 
-			grid.clear();
-			grid = buildGrid();
-			std::wcout << grid << std::endl;
+			std::print("{}", buildGrid());
 			SetConsoleCursorPosition(hStdout, cursorLocationActual);
 
  			while ((GetAsyncKeyState(VK_RETURN) & 0x8000) || (GetAsyncKeyState(VK_SPACE) & 0x8000));
@@ -117,7 +95,7 @@ int main() {
 
 		if (GetAsyncKeyState('R')) {
 			solvePuzzle();
-			std::wcout << buildGrid();
+			std::print("{}", buildGrid());
 			while (GetAsyncKeyState('R'));
 		}
 

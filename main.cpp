@@ -1,20 +1,17 @@
 #include "grid.hpp"
-//#include "curses.h"
-#include <windows.h>
-//#include <array>
-//#include <chrono>
+#include <conio.h>
 #include <thread>
-//#include <print>
 
 std::array<std::array<int, 10>, 10> regions;
 std::array<std::array<CellState, 10>, 10> cellStates = {EMPTY};
 std::array<int, 10> starsInRow = {0};
 std::array<int, 10> starsInColumn = {0};
 std::array<int, 10> starsInRegion = {0};
-COORD cursorLocationActual = {2, 1};
-std::pair<int, int> cursorLocationGameplay() {return std::make_pair((cursorLocationActual.X - 2) / 4, (cursorLocationActual.Y - 1) / 2);}
+std::pair<int, int> cursorLocationActual = {2, 3};
+std::pair<int, int> cursorLocationGameplay() {return {(cursorLocationActual.first - 1) / 2, (cursorLocationActual.second - 2) / 4};}
 
 int main() {
+
 	regions = {{
 		{0, 0, 0, 1, 2, 2, 2, 2, 2, 2},
 		{0, 3, 1, 1, 2, 2, 2, 2, 2, 2},
@@ -28,79 +25,82 @@ int main() {
 		{6, 6, 9, 9, 9, 9, 9, 5, 5, 5}
 	}};
 	
-	std::print("\x1b[?1049h{}", buildGrid());
-	
-	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-    	SetConsoleCursorPosition(hStdout, cursorLocationActual);
+	std::print("\x1b[?1049h{}\033[2;3H", buildGrid());
+
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	while (true) {
 
-		if (GetAsyncKeyState(VK_ESCAPE)) {
-			std::print("\x1b[?1049l");
-			break;
-		}
+		if (kbhit()) { 
 
-		if ((GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A') || GetAsyncKeyState('H')) && cursorLocationActual.X > 2) {
-			cursorLocationActual.X -= 4;
-    			SetConsoleCursorPosition(hStdout, cursorLocationActual);	
-			while ((GetAsyncKeyState(VK_LEFT) & 0x8000) || (GetAsyncKeyState('A') & 0x8000) || (GetAsyncKeyState('H') & 0x8000));
-		}
-
-		if ((GetAsyncKeyState(VK_DOWN) || GetAsyncKeyState('W') || GetAsyncKeyState('J')) && cursorLocationActual.Y < 19) {
-			cursorLocationActual.Y += 2;
-    			SetConsoleCursorPosition(hStdout, cursorLocationActual);
- 			while ((GetAsyncKeyState(VK_DOWN) & 0x8000) || (GetAsyncKeyState('S') & 0x8000) || (GetAsyncKeyState('J') & 0x8000));
-		}
-
-		if ((GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W') || GetAsyncKeyState('K')) && cursorLocationActual.Y > 1) {
-			cursorLocationActual.Y -= 2;
-    			SetConsoleCursorPosition(hStdout, cursorLocationActual);
- 			while ((GetAsyncKeyState(VK_UP) & 0x8000) || (GetAsyncKeyState('W') & 0x8000) || (GetAsyncKeyState('K') & 0x8000));
-		}
-
-		if ((GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D') || GetAsyncKeyState('L')) && cursorLocationActual.X < 38) {
-			cursorLocationActual.X += 4;
-    			SetConsoleCursorPosition(hStdout, cursorLocationActual);
- 			while ((GetAsyncKeyState(VK_RIGHT) & 0x8000) || (GetAsyncKeyState('D') & 0x8000) || (GetAsyncKeyState('L') & 0x8000));
-		}
-
-		if ((GetAsyncKeyState(VK_RETURN) & 0x8000) || GetAsyncKeyState(VK_SPACE)) {
-			
-			// Add ·
-			if (cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] == EMPTY) {
-				cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] = MARKEDOFF;
+			char c = getch();
+	
+			// ESCAPE
+			if (c == 27) {
+				std::print("\x1b[?1049l");
+				break;
 			}
 
-			// Add ★
-			else if (cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] == MARKEDOFF) {
-				cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] = STAR;
-				++starsInRow[cursorLocationGameplay().second];
-				++starsInColumn[cursorLocationGameplay().first];
-				++starsInRegion[regions[cursorLocationGameplay().second][cursorLocationGameplay().first]];
+			// LEFT
+			else if ((c == 75 || c == 'a' || c == 'h') && cursorLocationActual.second > 2) {
+				cursorLocationActual.second -= 4;
+				std::print("\033[4D");
 			}
 
-			// Clear cell
-			else if (cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] == STAR) {
-				cellStates[cursorLocationGameplay().second][cursorLocationGameplay().first] = EMPTY; 
-				--starsInRow[cursorLocationGameplay().second];
-				--starsInColumn[cursorLocationGameplay().first];
-				--starsInRegion[regions[cursorLocationGameplay().second][cursorLocationGameplay().first]];
+			// DOWN
+			else if ((c == 80 || c == 's' || c == 'j') && cursorLocationActual.first < 19) {
+				cursorLocationActual.first += 2;
+				std::print("\033[2B");
 			}
 
-			std::print("{}", buildGrid());
-			SetConsoleCursorPosition(hStdout, cursorLocationActual);
+			// UP
+			else if ((c == 72 || c == 'w' || c == 'k') && cursorLocationActual.first > 1) {
+				cursorLocationActual.first -= 2;
+				std::print("\033[2A");
+			}
 
- 			while ((GetAsyncKeyState(VK_RETURN) & 0x8000) || (GetAsyncKeyState(VK_SPACE) & 0x8000));
+			// RIGHT
+			else if ((c == 77 || c == 'd' || c == 'l') && cursorLocationActual.second < 38) {
+				cursorLocationActual.second += 4;
+				std::print("\033[4C");
+			}
+
+			// ENTER, SPACE
+			if (c == 13 || c == ' ') {
+				
+				// Add ·
+				if (cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] == EMPTY) {
+					cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] = MARKEDOFF;
+				}
+
+				// Add ★
+				else if (cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] == MARKEDOFF) {
+					cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] = STAR;
+					++starsInRow[cursorLocationGameplay().first];
+					++starsInColumn[cursorLocationGameplay().second];
+					++starsInRegion[regions[cursorLocationGameplay().first][cursorLocationGameplay().second]];
+				}
+
+				// Clear cell
+				else if (cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] == STAR) {
+					cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] = EMPTY; 
+					--starsInRow[cursorLocationGameplay().first];
+					--starsInColumn[cursorLocationGameplay().second];
+					--starsInRegion[regions[cursorLocationGameplay().first][cursorLocationGameplay().second]];
+				}
+
+				std::print("{}\033[{};{}H", buildGrid(), cursorLocationActual.first, cursorLocationActual.second);
+
+			}
+
+			if (c == 'r') {
+				solvePuzzle();
+				std::print("{}", buildGrid());
+			}
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
-
-		if (GetAsyncKeyState('R')) {
-			solvePuzzle();
-			std::print("{}", buildGrid());
-			while (GetAsyncKeyState('R'));
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
 	}
+
 	return 0;
+
 }

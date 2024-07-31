@@ -26,7 +26,6 @@ int main() {
 	}};
 	
 	std::print("\x1b[?1049h{}\033[2;3H", buildGrid());
-
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	while (true) {
 
@@ -65,7 +64,7 @@ int main() {
 			}
 
 			// ENTER, SPACE
-			if (c == 13 || c == ' ') {
+			else if (c == 13 || c == ' ') {
 				
 				// Add ·
 				if (cellStates[cursorLocationGameplay().first][cursorLocationGameplay().second] == EMPTY) {
@@ -92,9 +91,9 @@ int main() {
 
 			}
 
-			if (c == 'r') {
+			else if (c == 'r') {
 				solvePuzzle();
-				std::print("{}", buildGrid());
+				std::print("{}\033[{};{}H", buildGrid(), cursorLocationActual.first, cursorLocationActual.second);
 			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));

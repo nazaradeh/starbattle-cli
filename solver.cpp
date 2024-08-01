@@ -1,38 +1,28 @@
-#include "grid.hpp"
-//#include <algorithm>
-//#include <utility>
+#include "globals.hpp"
+#include "solver.hpp"
 #include <unordered_set>
 #include <ranges>
-//#include <iostream>
-//#include <numeric>
 #include <vector>
 //#include <print>
+#include <functional>
 
 std::array<int, 10> markedOffInRow = {0};
 std::array<int, 10> markedOffInColumn = {0};
 std::array<int, 10> markedOffInRegion = {0};
 std::array<int, 30> segmentSizes = {0};
-//std::array<int, 30> segmentSizesIndices;
-//std::array<int, 30> segmentOrder;
 std::array<std::vector<std::pair<int, int>>, 10> regionCellLocations;
 std::vector<std::pair<int, int>> backtracker;
-
 const std::array<std::pair<int, int>, 8> NEIGHBOURS = {{
 	{-1, -1}, {-1, 0}, {-1, 1},
 	{0, -1},           {0, 1},
 	{1, -1},  {1, 0},  {1, 1}
 }};
-
 const std::array<std::pair<int, int>, 8> ORTHONEIGHBOURS = {{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}};
 
-struct pair_hash {
-	std::size_t operator() (const std::pair<int, int>& pair) const {
-		return std::hash<int>()(pair.first) ^ (std::hash<int>()(pair.second) << 1);
-	}
-};
-
 std::vector<std::pair<int, int>> getPerimeterCells(const int& region, const std::vector<std::pair<int, int>>& regionCells) {
-	std::unordered_set<std::pair<int, int>, pair_hash> perimeterSet;
+	std::unordered_set<std::pair<int, int>, std::function<std::size_t(const std::pair<int, int>&)>> perimeterSet(0, [](const std::pair<int, int>& pair) {
+        	return std::hash<int>()(pair.first) ^ (std::hash<int>()(pair.second) << 1);
+	});
 	for (const auto& cell : regionCells) {
 		for (const auto& offset : ORTHONEIGHBOURS) {
 			int y = cell.first + offset.first;

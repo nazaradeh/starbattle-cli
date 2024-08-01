@@ -1,4 +1,6 @@
+#include "globals.hpp"
 #include "grid.hpp"
+#include "solver.hpp"
 #include <conio.h>
 #include <thread>
 

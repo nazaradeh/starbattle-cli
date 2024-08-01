@@ -1,12 +1,11 @@
+#include "globals.hpp"
 #include "grid.hpp"
 #include <string>
 #include <algorithm>
 
 std::string buildGrid() {
 
-	std::string grid("\x1b[H▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄\n█"); // Move to top of screen
-	//grid.append("▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄\n█"); // Ceiling row
-	//grid.append("\n█"); // Start next line with a wall
+	std::string grid("\x1b[H▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄\n█"); // Move to top of screen and print ceiling
 	
 	for (int row = 0; row < 10; ++row) {
 

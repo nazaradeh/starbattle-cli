@@ -7,21 +7,24 @@
 #include <functional>
 #include <algorithm>
 
+namespace views = std::views;
+namespace ranges = std::ranges;
 std::array<int, 10> markedOffInRow = {0};
 std::array<int, 10> markedOffInColumn = {0};
 std::array<int, 10> markedOffInRegion = {0};
 std::array<int, 30> segmentSizes = {0};
 std::array<std::vector<std::pair<int, int>>, 10> regionCellLocations;
 std::vector<std::pair<int, int>> backtracker;
-const std::array<std::pair<int, int>, 8> NEIGHBOURS = {{
-	{-1, -1}, {-1, 0}, {-1, 1},
-	{0, -1},           {0, 1},
-	{1, -1},  {1, 0},  {1, 1}
-}};
-const std::array<std::pair<int, int>, 8> ORTHONEIGHBOURS = {{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}};
+const std::array<std::pair<int, int>, 8> NEIGHBOURS = {{{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}};
+const std::array<std::pair<int, int>, 4> ORTHONEIGHBOURS = {{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}};
+
+/*void printLog() {
+	std::print("{}\nSize of region 0: {}\nSize of region 3: {}\nBacktracker size: {} \n", buildGrid(), segmentSizes[20+0], segmentSizes[20+3], backtracker.size());
+	std::cin.get();
+}*/
 
 std::vector<std::pair<int, int>> getPerimeterCells(const int& region, const std::vector<std::pair<int, int>>& regionCells) {
-	std::unordered_set<std::pair<int, int>, std::function<std::size_t(const std::pair<int, int>&)>> perimeterSet(0, [](const std::pair<int, int>& pair) {
+	std::unordered_set<std::pair<int, int>, std::function<int(const std::pair<int, int>&)>> perimeterSet(0, [](const std::pair<int, int>& pair) {
         	return std::hash<int>()(pair.first) ^ (std::hash<int>()(pair.second) << 1);
 	});
 	for (const auto& cell : regionCells) {
@@ -31,13 +34,8 @@ std::vector<std::pair<int, int>> getPerimeterCells(const int& region, const std:
 			if (y >= 0 && y < 10 && x >= 0 && x < 10 && regions[y][x] != region) perimeterSet.emplace(y, x);
 		}
 	}
-	return std::ranges::to<std::vector>(perimeterSet);
+	return ranges::to<std::vector>(perimeterSet);
 }
-
-/*void printLog() {
-	std::print("{}\nSize of region 0: {}\nSize of region 3: {}\nBacktracker size: {} \n", buildGrid(), segmentSizes[20+0], segmentSizes[20+3], backtracker.size());
-	std::cin.get();
-}*/
 
 void placeStar(const int& region, const std::pair<int, int>& coord) {
 	cellStates[coord.first][coord.second] = STAR;
@@ -61,7 +59,7 @@ void placeStar(const int& region, const std::pair<int, int>& coord) {
 
 void solvePuzzle() {
 
-	namespace views = std::views;
+	
 
 	for (int row : views::iota(0, 10)) {
 		for (int col : views::iota(0, 10)) {
@@ -80,16 +78,18 @@ void solvePuzzle() {
 	}
 
 
-	for (int region : views::iota(0, 10)) {
-
-		const auto& regionCoords = std::ranges::to<std::vector>(regionCellLocations[region] | views::filter([&](const auto& coord) {return cellStates[coord.first][coord.second] != MARKEDOFF;}));
-		const int& regionRow = regionCoords.front().first;
-
-		if (std::ranges::all_of(regionCoords | views::drop(1), [&regionRow](const auto& pair) {return pair.first == regionRow;})) {
-			for (auto col : views::iota(0, 10) | views::filter([&](const int& col) {return regions[regionRow][col] != region;})) cellStates[regionRow][col] = MARKEDOFF;
-		}
+	for (const int& region : views::iota(0, 10)) {
 		
-		for (const auto& perimeterCell : getPerimeterCells(region, regionCoords)) { // Go through the orthogonal perimeter of region
+		// If this region's cells form a straight line, mark off the rest of the cells on that row or column
+		const auto& regionCoords = ranges::to<std::vector>(regionCellLocations[region] | views::filter([&](const auto& coord) {return cellStates[coord.first][coord.second] != MARKEDOFF;}));
+		const int& regionRow = regionCoords.front().first;
+		const int& regionCol = regionCoords.front().second;
+		if (ranges::all_of(regionCoords | views::drop(1), [&regionRow](const auto& pair) {return pair.first == regionRow;}))
+			{for (const int& col : views::iota(0, 10) | views::filter([&](const int& col) {return regions[regionRow][col] != region;})) cellStates[regionRow][col] = MARKEDOFF;}
+		else if (ranges::all_of(regionCoords | views::drop(1), [&regionCol](const auto& pair) {return pair.second == regionCol;}))
+			{for (const int& row : views::iota(0, 10) | views::filter([&](const int& row) {return regions[row][regionCol] != region;})) cellStates[row][regionCol] = MARKEDOFF;}
+		
+		for (const std::pair<int, int>& perimeterCell : getPerimeterCells(region, regionCoords)) { // Go through the orthogonal perimeter of region
 			if (cellStates[perimeterCell.first][perimeterCell.second] == EMPTY) {
 				placeStar(region, {perimeterCell}); // Place star and surround with MARKEDOFF
 	 

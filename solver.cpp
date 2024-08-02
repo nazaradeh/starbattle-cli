@@ -61,10 +61,10 @@ void placeStar(const int& region, const std::pair<int, int>& coord) {
 
 void solvePuzzle() {
 
-	namespace v = std::views;
+	namespace views = std::views;
 
-	for (int row : v::iota(0, 10)) {
-		for (int col : v::iota(0, 10)) {
+	for (int row : views::iota(0, 10)) {
+		for (int col : views::iota(0, 10)) {
 			regionCellLocations[regions[row][col]].emplace_back(row, col);
 			if (cellStates[row][col] == MARKEDOFF) {
 				++markedOffInRow[row];
@@ -80,12 +80,13 @@ void solvePuzzle() {
 	}
 
 
-	for (int region : v::iota(0, 10)) {
+	for (int region : views::iota(0, 10)) {
 
-		const auto& regionCoords = regionCellLocations[region];
+		const auto& regionCoords = std::ranges::to<std::vector>(regionCellLocations[region] | views::filter([&](const auto& coord) {return cellStates[coord.first][coord.second] != MARKEDOFF;}));
+		const int& regionRow = regionCoords.front().first;
 
-		if (std::ranges::all_of(regionCoords | v::drop(1), [first = regionCoords.front().first](const auto& p) {return p.first == first;})) {
-			for (auto& cellState : cellStates[regionCoords[0].first] | v::filter([](const CellState& state){return MARKEDOFF;})) cellState = MARKEDOFF;
+		if (std::ranges::all_of(regionCoords | views::drop(1), [&regionRow](const auto& pair) {return pair.first == regionRow;})) {
+			for (auto col : views::iota(0, 10) | views::filter([&](const int& col) {return regions[regionRow][col] != region;})) cellStates[regionRow][col] = MARKEDOFF;
 		}
 		
 		for (const auto& perimeterCell : getPerimeterCells(region, regionCoords)) { // Go through the orthogonal perimeter of region
@@ -95,6 +96,7 @@ void solvePuzzle() {
 				// The outside star already causes the region to have too few available cells
 				if (segmentSizes[20 + region] < 2 - starsInRegion[region]) {
 					for (auto& [y, x] : backtracker) {
+						if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
 						cellStates[y][x] = EMPTY;
 						++segmentSizes[20 + regions[y][x]];
 					}
@@ -110,7 +112,6 @@ void solvePuzzle() {
 						if (cellStates[cellCoord2.first][cellCoord2.second] == EMPTY) {
 							int backtrackerSizeOld = backtracker.size();
 							placeStar(region, cellCoord2); // Try placing a star to see if another star can fit inside
-							int backtrackerSizeNew = backtracker.size() - backtrackerSizeOld;
 							if (segmentSizes[20 + region] > 0) {
 								for (auto& [y, x] : backtracker) {
 									if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
@@ -122,12 +123,12 @@ void solvePuzzle() {
 								break;
 							}
 							else {
-								for (auto& [y, x] : backtracker | v::drop(backtracker.size() - backtrackerSizeNew)) {
+								for (auto& [y, x] : backtracker | views::drop(backtrackerSizeOld)) {
 									if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
 									cellStates[y][x] = EMPTY;
 									++segmentSizes[20 + regions[y][x]];
 								}
-								backtracker.resize(backtracker.size() - backtrackerSizeNew);
+								backtracker.resize(backtrackerSizeOld);
 							}
 						}	
 					}

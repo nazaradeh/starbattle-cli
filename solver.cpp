@@ -15,7 +15,6 @@ std::array<int, 10> markedOffInRegion = {0};
 std::array<int, 30> segmentSizes = {0};
 std::array<std::vector<std::pair<int, int>>, 10> regionCellLocations;
 std::vector<std::pair<int, int>> trackedCells;
-const std::array<std::pair<int, int>, 8> NEIGHBOURS = {{{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}};
 const std::array<std::pair<int, int>, 4> ORTHONEIGHBOURS = {{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}};
 
 /*void printLog() {
@@ -64,6 +63,10 @@ void backtrack(const auto& cells, const std::optional<int>& trackedCellsSizeOld 
 	trackedCellsSizeOld ? trackedCells.resize(*trackedCellsSizeOld) : trackedCells.clear();
 }
 
+void PerimeterCellCheck() {
+
+}
+
 void solvePuzzle() {
 	
 	// Go through the grid to gather info on each row, column, and region
@@ -95,42 +98,40 @@ void solvePuzzle() {
 		else if (ranges::all_of(regionCoords | views::drop(1), [&regionCol](const auto& pair) {return pair.second == regionCol;}))
 			{for (const int& row : views::iota(0, 10) | views::filter([&](const int& row) {return regions[row][regionCol] != region;})) cellStates[row][regionCol] = MARKEDOFF;}
 		
-		for (const std::pair<int, int>& perimeterCell : getPerimeterCells(region, regionCoords)) { // Go through the orthogonal perimeter of region
-			if (cellStates[perimeterCell.first][perimeterCell.second] == EMPTY) {
-				placeStar(region, {perimeterCell}); // Place star and surround with MARKEDOFF
-	 
-				// The outside star already causes the region to have too few available cells
-				if (segmentSizes[20 + region] < 2 - starsInRegion[region]) {
+		for (const std::pair<int, int>& perimeterCell : getPerimeterCells(region, regionCoords)
+			| views::filter([&](const auto& cell) {return cellStates[cell.first][cell.second] == EMPTY;})) { // Go through the orthogonal perimeter of region
+			placeStar(region, {perimeterCell}); // Place star and surround with MARKEDOFF
+ 
+			// The outside star already causes the region to have too few available cells
+			if (segmentSizes[20 + region] < 2 - starsInRegion[region]) {
+				backtrack(trackedCells);
+				cellStates[perimeterCell.first][perimeterCell.second] = MARKEDOFF;
+				--segmentSizes[20 + regions[perimeterCell.first][perimeterCell.second]];
+			}
+
+			// The outside star still allows for the region's remaining two stars to be placed
+			else if (starsInRegion[region] == 0) {
+				bool skip = false;
+				for (auto& cellCoord2 : regionCoords | views::filter([&](const auto& coord)
+					{return cellStates[coord.first][coord.second] == EMPTY;})) { // Go through each cell in region 0 again	
+					int trackedCellsSizeOld = trackedCells.size();
+					placeStar(region, cellCoord2); // Try placing a star to see if another star can fit inside
+					if (segmentSizes[20 + region] > 0) { // Another star can fit inside, meaning we cannot rule out the perimeter cell
+						backtrack(trackedCells);
+						skip = true;
+						break;
+					}
+					else backtrack(trackedCells, trackedCellsSizeOld); // No other star can fit inside. Keep checking other inner cells.
+				}
+				if (!skip) { // There is no way to fit both stars in the region, given this perimeter star placement
 					backtrack(trackedCells);
 					cellStates[perimeterCell.first][perimeterCell.second] = MARKEDOFF;
 					--segmentSizes[20 + regions[perimeterCell.first][perimeterCell.second]];
 				}
-
-				// The outside star still allows for the region's remaining two stars to be placed
-				else if (starsInRegion[region] == 0) {
-					bool skip = false;
-					for (auto& cellCoord2 : regionCoords) { // Go through each cell in region 0 again	
-						if (cellStates[cellCoord2.first][cellCoord2.second] == EMPTY) {
-							int trackedCellsSizeOld = trackedCells.size();
-							placeStar(region, cellCoord2); // Try placing a star to see if another star can fit inside
-							if (segmentSizes[20 + region] > 0) {
-								backtrack(trackedCells);
-								skip = true;
-								break;
-							}
-							else backtrack(trackedCells, trackedCellsSizeOld);
-						}	
-					}
-					if (!skip) {
-						backtrack(trackedCells);
-						cellStates[perimeterCell.first][perimeterCell.second] = MARKEDOFF; // The original star we placed cannot be a star
-						--segmentSizes[20 + regions[perimeterCell.first][perimeterCell.second]];
-					}
-				}
-
-				// The outside star still allows for the regions one remaining star to be placed
-				else if (starsInRegion[region] == 1) backtrack(trackedCells);
 			}
+
+			// The outside star still allows for the regions one remaining star to be placed
+			else if (starsInRegion[region] == 1) backtrack(trackedCells);
 		}
 	}
 

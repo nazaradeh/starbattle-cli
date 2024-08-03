@@ -14,19 +14,18 @@ std::array<int, 10> markedOffInColumn = {0};
 std::array<int, 10> markedOffInRegion = {0};
 std::array<int, 30> segmentSizes = {0};
 std::array<std::vector<std::pair<int, int>>, 10> regionCellLocations;
-std::vector<std::pair<int, int>> backtracker;
+std::vector<std::pair<int, int>> trackedCells;
 const std::array<std::pair<int, int>, 8> NEIGHBOURS = {{{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}}};
 const std::array<std::pair<int, int>, 4> ORTHONEIGHBOURS = {{{-1, 0}, {0, -1}, {0, 1}, {1, 0}}};
 
 /*void printLog() {
-	std::print("{}\nSize of region 0: {}\nSize of region 3: {}\nBacktracker size: {} \n", buildGrid(), segmentSizes[20+0], segmentSizes[20+3], backtracker.size());
+	std::print("{}\nSize of region 0: {}\nSize of region 3: {}\nBacktracker size: {} \n", buildGrid(), segmentSizes[20+0], segmentSizes[20+3], trackedCells.size());
 	std::cin.get();
 }*/
 
 std::vector<std::pair<int, int>> getPerimeterCells(const int& region, const std::vector<std::pair<int, int>>& regionCells) {
-	std::unordered_set<std::pair<int, int>, std::function<int(const std::pair<int, int>&)>> perimeterSet(0, [](const std::pair<int, int>& pair) {
-        	return std::hash<int>()(pair.first) ^ (std::hash<int>()(pair.second) << 1);
-	});
+	std::unordered_set<std::pair<int, int>, std::function<int(const std::pair<int, int>&)>> perimeterSet(0, [](const std::pair<int, int>& pair)
+		{return std::hash<int>()(pair.first) ^ (std::hash<int>()(pair.second) << 1);});
 	for (const auto& cell : regionCells) {
 		for (const auto& offset : ORTHONEIGHBOURS) {
 			int y = cell.first + offset.first;
@@ -39,7 +38,7 @@ std::vector<std::pair<int, int>> getPerimeterCells(const int& region, const std:
 
 void placeStar(const int& region, const std::pair<int, int>& coord) {
 	cellStates[coord.first][coord.second] = STAR;
-	backtracker.push_back(coord);
+	trackedCells.push_back(coord);
 	++starsInRegion[regions[coord.first][coord.second]];
 	--segmentSizes[20 + regions[coord.first][coord.second]];
 	for (const auto& [yOff, xOff] : NEIGHBOURS) {
@@ -50,19 +49,26 @@ void placeStar(const int& region, const std::pair<int, int>& coord) {
 				regions[coord.first + yOff][coord.second + xOff] == region &&
 				cellStates[coord.first + yOff][coord.second + xOff] == EMPTY) {
 			cellStates[coord.first + yOff][coord.second + xOff] = MARKEDOFF;
-			backtracker.push_back({coord.first + yOff, coord.second + xOff});
+			trackedCells.push_back({coord.first + yOff, coord.second + xOff});
 			--segmentSizes[20 + region];
 		}
 	}
 }
 
+void backtrack(const auto& cells, const std::optional<int>& trackedCellsSizeOld = std::nullopt) {
+	for (const auto& [y, x] : trackedCellsSizeOld ? cells | views::drop(*trackedCellsSizeOld) : cells | views::drop(0)) {
+		if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
+		cellStates[y][x] = EMPTY;
+		++segmentSizes[20 + regions[y][x]];
+	}
+	trackedCellsSizeOld ? trackedCells.resize(*trackedCellsSizeOld) : trackedCells.clear();
+}
 
 void solvePuzzle() {
-
 	
-
-	for (int row : views::iota(0, 10)) {
-		for (int col : views::iota(0, 10)) {
+	// Go through the grid to gather info on each row, column, and region
+	for (const int& row : views::iota(0, 10)) {
+		for (const int& col : views::iota(0, 10)) {
 			regionCellLocations[regions[row][col]].emplace_back(row, col);
 			if (cellStates[row][col] == MARKEDOFF) {
 				++markedOffInRow[row];
@@ -95,12 +101,7 @@ void solvePuzzle() {
 	 
 				// The outside star already causes the region to have too few available cells
 				if (segmentSizes[20 + region] < 2 - starsInRegion[region]) {
-					for (auto& [y, x] : backtracker) {
-						if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
-						cellStates[y][x] = EMPTY;
-						++segmentSizes[20 + regions[y][x]];
-					}
-					backtracker.clear();
+					backtrack(trackedCells);
 					cellStates[perimeterCell.first][perimeterCell.second] = MARKEDOFF;
 					--segmentSizes[20 + regions[perimeterCell.first][perimeterCell.second]];
 				}
@@ -110,49 +111,25 @@ void solvePuzzle() {
 					bool skip = false;
 					for (auto& cellCoord2 : regionCoords) { // Go through each cell in region 0 again	
 						if (cellStates[cellCoord2.first][cellCoord2.second] == EMPTY) {
-							int backtrackerSizeOld = backtracker.size();
+							int trackedCellsSizeOld = trackedCells.size();
 							placeStar(region, cellCoord2); // Try placing a star to see if another star can fit inside
 							if (segmentSizes[20 + region] > 0) {
-								for (auto& [y, x] : backtracker) {
-									if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
-									cellStates[y][x] = EMPTY;
-									++segmentSizes[20 + regions[y][x]];
-								}
-								backtracker.clear();
+								backtrack(trackedCells);
 								skip = true;
 								break;
 							}
-							else {
-								for (auto& [y, x] : backtracker | views::drop(backtrackerSizeOld)) {
-									if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
-									cellStates[y][x] = EMPTY;
-									++segmentSizes[20 + regions[y][x]];
-								}
-								backtracker.resize(backtrackerSizeOld);
-							}
+							else backtrack(trackedCells, trackedCellsSizeOld);
 						}	
 					}
 					if (!skip) {
-						for (auto& [y, x] : backtracker) {
-							if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
-							cellStates[y][x] = EMPTY;
-							++segmentSizes[20 + regions[y][x]];
-						}
-						backtracker.clear();
+						backtrack(trackedCells);
 						cellStates[perimeterCell.first][perimeterCell.second] = MARKEDOFF; // The original star we placed cannot be a star
 						--segmentSizes[20 + regions[perimeterCell.first][perimeterCell.second]];
 					}
 				}
 
 				// The outside star still allows for the regions one remaining star to be placed
-				else if (starsInRegion[region] == 1) {
-					for (auto& [y, x] : backtracker) {
-						if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
-						cellStates[y][x] = EMPTY;
-						++segmentSizes[20 + regions[y][x]];
-						}
-					backtracker.clear();
-				}
+				else if (starsInRegion[region] == 1) backtrack(trackedCells);
 			}
 		}
 	}

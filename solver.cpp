@@ -55,12 +55,12 @@ void placeStar(const int& region, const std::pair<int, int>& coord) {
 }
 
 void backtrack(const auto& cells, const std::optional<int>& trackedCellsSizeOld = std::nullopt) {
-	for (const auto& [y, x] : cells | views::drop(*trackedCellsSizeOld.value_or(0))) {
+	for (const auto& [y, x] : cells | views::drop(trackedCellsSizeOld.value_or(0))) {
 		if (cellStates[y][x] == STAR) --starsInRegion[regions[y][x]];
 		cellStates[y][x] = EMPTY;
 		++segmentSizes[20 + regions[y][x]];
 	}
-	trackedCells.resize(*trackedCellsSizeOld.value_or(0));
+	trackedCells.resize(trackedCellsSizeOld.value_or(0));
 }
 
 void PerimeterCellCheck() {

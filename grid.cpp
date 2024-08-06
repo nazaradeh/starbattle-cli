@@ -20,6 +20,8 @@ std::string cellElement(int row, int col) {
 			for (const auto& [yOff, xOff] : NEIGHBOURS) if (col+xOff < 10 && row+yOff < 10 && cellStates[row+yOff][col+xOff] == STAR)
 				return " \x1b[31m★\x1b[39m "; // Red
 			return " \x1b[33m★\x1b[39m "; // Yellow
+		default:
+			return " ? "; // Should never happen
 	}
 }
 
@@ -29,11 +31,9 @@ void cellUnderside(std::string& grid, int row) {
 		if (regions[row][col] != regions[row][col+1]) {
 			if (regions[row][col] == regions[row+1][col]) grid.append("───█");
 			else grid.append("▄▄▄█");
-		}
-		else if (regions[row+1][col] == regions[row+1][col+1] && regions[row][col] == regions[row+1][col]) {
+		} else if (regions[row+1][col] == regions[row+1][col+1] && regions[row][col] == regions[row+1][col]) {
 			grid.append("───┼");
-		}
-		else {
+		} else {
 			if (regions[row][col] == regions[row+1][col]) grid.append("───▄");
 			else grid.append("▄▄▄▄");
 		}
@@ -58,9 +58,10 @@ std::string buildGrid() {
 		if (row < 9) cellUnderside(grid, row); // Border row between two vertically-adjacent gameplay rows
 	}
 	// Floor row
-	for (const int col : std::views::iota(0,10)) {
-		if (col < 9 && regions[9][col] == regions[9][col+1]) grid.append("▄▄▄▄");
+	for (const int col : std::views::iota(0,9)) {
+		if (regions[9][col] == regions[9][col+1]) grid.append("▄▄▄▄");
 		else grid.append("▄▄▄█");
 	}
+	grid.append("▄▄▄█\n");
 	return grid;
 }

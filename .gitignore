@@ -33,6 +33,7 @@
 
 # Build folder
 /build
+/unix
 
 CMakeLists.txt
 note_to_self.txt
